@@ -64,9 +64,9 @@ export default function Dashboard({ data }: Props) {
             <button
               key={f.label}
               onClick={() => setSelected(f.days)}
-              className={`px-4 py-2 rounded-lg transition ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 selected === f.days
-                  ? 'bg-zinc-900 text-white'
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                   : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700'
               }`}
             >
