@@ -1,8 +1,8 @@
 'use client'
 
-import { Home, HelpCircle, History, Settings, Sliders } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Home, HelpCircle, History, Settings, Sliders } from 'lucide-react'
 
 const topLinks = [
   { name: 'Home', href: '/', icon: Home },
