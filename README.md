@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌡️ SmartHome Temperature Monitoring System
 
-## Getting Started
+A full-stack IoT dashboard for monitoring and visualizing temperature data collected from an Arduino device. The system stores sensor data in a database and presents it through a modern web interface with filtering, statistics, and history tracking.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📊 Dashboard
+- Interactive temperature chart
+- Time filtering (1D, 1W, 1M, 1Y)
+- Real-time statistics:
+  - Minimum temperature
+  - Maximum temperature
+  - Average temperature
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 📜 History
+- Table view of recorded temperature data
+- Sorted by latest entries
+- Easy overview of past measurements
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🎛️ Control
+- Set temperature threshold (warning/limit)
+- Configure data transmission interval (e.g. every 60 seconds)
 
-## Learn More
+### ❓ Help
+- Explains how the system works
+- Describes filters, chart, and statistics
 
-To learn more about Next.js, take a look at the following resources:
+### ⚙️ Settings
+- Placeholder for future user-based settings (authentication required)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧱 Tech Stack
 
-## Deploy on Vercel
+### Frontend
+- Next.js (App Router)
+- React
+- Tailwind CSS
+- Recharts (data visualization)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Backend / Database
+- Supabase (PostgreSQL + REST API)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Hardware
+- Arduino (with WiFi module)
+
+---
+
+## ⚙️ How It Works
+
+1. The Arduino collects temperature data  
+2. Data is sent to Supabase via HTTPS  
+3. The Next.js application fetches the data from the database  
+4. The data is:
+   - Visualized in charts  
+   - Filtered by time  
+   - Summarized with statistics  
+5. Users can interact with the dashboard and view historical data  
+
+---
+
+## 🔐 Security
+
+- All communication between components is handled over **HTTPS**
+- This ensures:
+  - Data encryption during transmission  
+  - Protection against man-in-the-middle attacks  
