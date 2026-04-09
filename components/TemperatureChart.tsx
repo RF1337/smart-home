@@ -16,7 +16,12 @@ type Props = {
 export default function TemperatureChart({ data }: Props) {
   const formattedData = data.map((item) => ({
     ...item,
-    time: new Date(item.created_at).toLocaleTimeString(),
+    time: new Date(item.created_at).toLocaleString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
   }))
 
   return (
@@ -35,7 +40,7 @@ export default function TemperatureChart({ data }: Props) {
             labelStyle={{ color: '#a1a1aa' }} // lighter gray for timestamp
             itemStyle={{ color: '#fff' }} // value text
           />
-          <Line type="monotone" dataKey="value" stroke="#8884d8" />
+          <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
     </div>
