@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signIn } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,9 +19,12 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
+      toast.success('Logget ind!')
       router.push('/locations')
     } catch (err: any) {
-      setErrorMessage(err?.message ?? 'Kunne ikke logge ind')
+      const msg = err?.message ?? 'Kunne ikke logge ind'
+      setErrorMessage(msg)
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }

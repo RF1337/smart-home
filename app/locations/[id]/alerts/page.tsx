@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Bell, TriangleAlert, ThermometerSun, Check, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Table,
   TableBody,
@@ -105,10 +106,19 @@ export default function AlertsPage() {
       .eq("id", sensorId)
       .eq("location_id", locationId)
       .select("id")
-    if (error) setSaveError(error.message)
-    else if (!data || data.length === 0) setSaveError("Ingen rækker opdateret — tjek RLS-politikker i Supabase")
+    if (error) {
+      const msg = error.message
+      setSaveError(msg)
+      toast.error(`Kunne ikke gemme: ${msg}`)
+    }
+    else if (!data || data.length === 0) {
+      const msg = "Ingen rækker opdateret — tjek RLS-politikker i Supabase"
+      setSaveError(msg)
+      toast.error(msg)
+    }
     else {
       setSaved(sensorId)
+      toast.success('Alarmgrænser gemt!')
       setTimeout(() => setSaved(null), 2000)
     }
     setSaving(null)

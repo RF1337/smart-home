@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { MapPin, Plus, LogIn, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 type Location = Tables<"location">
 
@@ -84,7 +85,9 @@ export default function LocationsPage() {
       .insert({ id: locationId, name: name.trim(), address: address.trim() || null })
 
     if (locError) {
-      setCreateError(locError.message)
+      const msg = locError.message
+      setCreateError(msg)
+      toast.error(msg)
       setCreating(false)
       return
     }
@@ -95,7 +98,9 @@ export default function LocationsPage() {
       .insert({ user_id: user.id, location_id: locationId })
 
     if (linkError) {
-      setCreateError(linkError.message)
+      const msg = linkError.message
+      setCreateError(msg)
+      toast.error(msg)
       setCreating(false)
       return
     }
@@ -105,6 +110,7 @@ export default function LocationsPage() {
     setSheetOpen(false)
     await loadLocations(user.id)
     setCreating(false)
+    toast.success('Lokation oprettet!')
   }
 
   async function handleJoin(e: React.FormEvent) {
@@ -123,7 +129,9 @@ export default function LocationsPage() {
       .maybeSingle()
 
     if (locError || !locData) {
-      setJoinError("Ugyldig kode — ingen lokation fundet.")
+      const msg = "Ugyldig kode — ingen lokation fundet."
+      setJoinError(msg)
+      toast.error(msg)
       setJoining(false)
       return
     }
@@ -137,7 +145,9 @@ export default function LocationsPage() {
       .maybeSingle()
 
     if (existing) {
-      setJoinError("Du er allerede tilknyttet denne lokation.")
+      const msg = "Du er allerede tilknyttet denne lokation."
+      setJoinError(msg)
+      toast.error(msg)
       setJoining(false)
       return
     }
@@ -147,7 +157,9 @@ export default function LocationsPage() {
       .insert({ user_id: user.id, location_id: locData.id })
 
     if (linkError) {
-      setJoinError(linkError.message)
+      const msg = linkError.message
+      setJoinError(msg)
+      toast.error(msg)
       setJoining(false)
       return
     }
@@ -156,6 +168,7 @@ export default function LocationsPage() {
     setJoinSheetOpen(false)
     await loadLocations(user.id)
     setJoining(false)
+    toast.success(`Tilsluttet ${locData.name}!`)
   }
 
   if (loading) {

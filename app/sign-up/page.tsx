@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signUp } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -18,9 +19,12 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password)
+      toast.success('Konto oprettet!')
       router.push('/locations')
     } catch (err: any) {
-      setErrorMessage(err?.message ?? 'Kunne ikke oprette konto')
+      const msg = err?.message ?? 'Kunne ikke oprette konto'
+      setErrorMessage(msg)
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }

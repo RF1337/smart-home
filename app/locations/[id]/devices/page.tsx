@@ -23,6 +23,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Plus, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 type Sensor = Tables<"sensor">
 
@@ -93,13 +94,17 @@ export default function DevicesPage() {
       .limit(1)
 
     if (findError) {
-      setAddError(`Søgningsfejl: ${findError.message}`)
+      const msg = `Søgningsfejl: ${findError.message}`
+      setAddError(msg)
+      toast.error(msg)
       setAdding(false)
       return
     }
 
     if (!matches || matches.length === 0) {
-      setAddError("Ingen enhed fundet med den kode.")
+      const msg = "Ingen enhed fundet med den kode."
+      setAddError(msg)
+      toast.error(msg)
       setAdding(false)
       return
     }
@@ -119,13 +124,17 @@ export default function DevicesPage() {
       .select()
 
     if (updateError) {
-      setAddError(`Opdateringsfejl: ${updateError.message}`)
+      const msg = `Opdateringsfejl: ${updateError.message}`
+      setAddError(msg)
+      toast.error(msg)
       setAdding(false)
       return
     }
 
     if (!updated || updated.length === 0) {
-      setAddError(`Opdatering blokeret af RLS — sensorens location_id matcher muligvis ikke din lokation. Sensor-id: ${sensor.id}`)
+      const msg = `Opdatering blokeret af RLS — sensorens location_id matcher muligvis ikke din lokation. Sensor-id: ${sensor.id}`
+      setAddError(msg)
+      toast.error('Kunne ikke tilføje enheden — tjek RLS-politikker.')
       setAdding(false)
       return
     }
@@ -135,6 +144,7 @@ export default function DevicesPage() {
     setSheetOpen(false)
     await fetchSensors()
     setAdding(false)
+    toast.success(`Enhed "${deviceName.trim()}" tilføjet!`)
   }
 
   return (

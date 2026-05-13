@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,6 +117,7 @@ export default function Dashboard() {
 
       if (error) {
         setErrorMessage(error.message);
+        toast.error(`Fejl ved hentning af temperaturdata: ${error.message}`);
         return;
       }
 

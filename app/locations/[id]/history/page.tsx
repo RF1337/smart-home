@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Download } from "lucide-react";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -50,6 +51,7 @@ export default function HistoryPage() {
 
     if (err) {
       setError(err.message);
+      toast.error(`Fejl ved hentning af data: ${err.message}`);
     } else {
       setRows((data ?? []).filter((r) => r.value !== null) as TempRow[]);
     }
@@ -74,6 +76,7 @@ export default function HistoryPage() {
     a.download = "temperatur-historik.csv";
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(`${rows.length} rækker eksporteret som CSV!`);
   }
 
   return (
