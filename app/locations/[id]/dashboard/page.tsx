@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -71,9 +71,9 @@ function CustomTooltip({ active, payload }: any) {
   const dateStr = d.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "numeric" });
   const timeStr = d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm">
-      <p className="font-medium text-gray-700">{dateStr} kl. {timeStr}</p>
-      <p className="mt-0.5 text-blue-600">{point.temperature.toFixed(1)} °C</p>
+    <div className="rounded-xl border border-border bg-white px-4 py-3 text-sm shadow-md">
+      <p className="text-xs text-gray-400 mb-1">{dateStr} kl. {timeStr}</p>
+      <p className="text-lg font-semibold text-gray-900">{point.temperature.toFixed(1)} °C</p>
     </div>
   );
 }
@@ -224,8 +224,7 @@ export default function Dashboard() {
       : `Sidst opdateret for ${Math.floor(secondsSinceUpdate / 60)} minutter siden`;
 
   return (
-    <div className="min-h-[calc(100vh-57px)] bg-gray-50 px-6 py-6">
-      <div className="w-full space-y-6">
+    <div className="w-full space-y-6">
 
         {/* Sensor selector */}
         <DropdownMenu>
@@ -246,7 +245,7 @@ export default function Dashboard() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card>
+          <Card className="border border-border ring-0">
             <CardContent className="p-5">
               <p className="text-sm text-gray-500">Aktuel Temperatur</p>
               <p className="mt-1 text-4xl font-bold text-gray-900">
@@ -256,7 +255,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border ring-0">
             <CardContent className="p-5">
               <p className="text-sm text-blue-600 font-medium">Gennemsnitstemperatur</p>
               <p className="mt-1 text-4xl font-bold text-gray-900">
@@ -266,7 +265,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border border-border ring-0">
             <CardContent className="p-5">
               <p className="text-sm text-gray-500 font-medium">Min / Maks temperatur</p>
               <div className="mt-2 flex items-center gap-3">
@@ -290,7 +289,7 @@ export default function Dashboard() {
         </div>
 
         {/* Chart */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <div className="rounded-xl border border-border bg-white p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Temperaturgraf over tid</h2>
             <div className="flex gap-1">
@@ -324,36 +323,49 @@ export default function Dashboard() {
           ) : (
             <div className="h-96 w-full sm:h-[480px]">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="4 4" stroke="#e2e8f0" vertical={false} />
                   <XAxis
                     dataKey="iso"
                     tickFormatter={(v) => formatXTick(v, timeRange)}
                     tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    axisLine={false}
+                    tickLine={false}
                     interval="preserveStartEnd"
                     minTickGap={60}
                   />
                   <YAxis
                     tick={{ fontSize: 11, fill: "#9ca3af" }}
-                    domain={[(dataMin: number) => dataMin - 0.2, (dataMax: number) => dataMax + 0.2]}
-                    label={{ value: "°C", angle: -90, position: "insideLeft", fill: "#6b7280" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickCount={6}
+                    tickFormatter={(v: number) => `${v.toFixed(0)}°`}
+                    domain={[(dataMin: number) => Math.floor(dataMin - 1), (dataMax: number) => Math.ceil(dataMax + 1)]}
+                    width={36}
                   />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Line
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#2563eb", strokeWidth: 1, strokeDasharray: "4 4" }} />
+                  <Area
                     type="monotone"
                     dataKey="temperature"
                     stroke="#2563eb"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
+                    fill="url(#tempGradient)"
                     dot={false}
+                    activeDot={{ r: 4, fill: "#2563eb", strokeWidth: 0 }}
                     isAnimationActive
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           )}
         </div>
 
-      </div>
     </div>
   );
 }

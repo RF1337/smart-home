@@ -34,16 +34,11 @@ const SETUP_STEPS = [
   },
   {
     step: 2,
-    title: "Forbind til WiFi",
-    description: "Følg instruktionerne for at forbinde din enhed til dit hjemmenetværk.",
-  },
-  {
-    step: 3,
     title: "Find aktiveringskoden",
     description: "Aktiveringskoden vises på enhedens display eller medfølgende kort.",
   },
   {
-    step: 4,
+    step: 3,
     title: "Registrer enheden",
     description: 'Klik på "Tilføj enhed", indtast koden og giv enheden et navn.',
   },
