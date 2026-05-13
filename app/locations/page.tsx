@@ -289,7 +289,7 @@ export default function LocationsPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {locations.map((loc) => (
             <Link key={loc.id} href={`/locations/${loc.id}/dashboard`}>
-              <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
+              <Card className="hover:bg-accent hover:shadow-md transition-all cursor-pointer h-full">
                 <CardContent className="flex items-start gap-4 p-5">
                   <div className="mt-0.5 rounded-md bg-primary/10 p-2">
                     <MapPin className="h-5 w-5 text-primary" />

@@ -138,7 +138,7 @@ export default function HistoryPage() {
         )}
 
         {rows.length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">

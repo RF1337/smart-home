@@ -64,7 +64,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild size="lg" className={onLocationsRoot ? "bg-accent font-bold" : ""}>
+                <SidebarMenuButton asChild size="lg" className={onLocationsRoot ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"}>
                   <Link href="/locations">
                     <Home className="h-5 w-5 shrink-0" />
                     <span className="text-base">Hjem</span>
@@ -83,7 +83,7 @@ export function AppSidebar() {
                             asChild={!disabled}
                             size="lg"
                             className={[
-                              isActive(item.slug) ? "bg-accent font-bold" : "",
+                              isActive(item.slug) ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted",
                               disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "",
                             ].join(" ")}
                           >
@@ -119,7 +119,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {bottomSections.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="lg" className={pathname === item.href ? "bg-accent font-bold" : ""}>
+              <SidebarMenuButton asChild size="lg" className={pathname === item.href ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"}>
                 <Link href={item.href}>
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span className="text-base">{item.title}</span>
