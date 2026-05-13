@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -31,7 +31,52 @@ interface TempData {
   value: number | null;
 }
 
-type TimeRange = "1 dag" | "1 uge" | "1 måned";
+type TimeRange = "1 dag" | "1 uge" | "1 måned" | "1 år";
+
+interface DataPoint {
+  iso: string;
+  temperature: number;
+}
+
+const TIME_RANGES: TimeRange[] = ["1 dag", "1 uge", "1 måned", "1 år"];
+
+function getCutoff(range: TimeRange): Date {
+  const now = new Date();
+  if (range === "1 dag") return new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  if (range === "1 uge") return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (range === "1 måned") return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+}
+
+function formatXTick(iso: string, range: TimeRange): string {
+  const d = new Date(iso);
+  if (range === "1 dag")
+    return d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  if (range === "1 uge")
+    return (
+      d.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit" }) +
+      " " +
+      d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })
+    );
+  if (range === "1 måned")
+    return d.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit" });
+  return d.toLocaleDateString("da-DK", { month: "short", year: "numeric" });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function CustomTooltip({ active, payload }: any) {
+  if (!active || !payload?.length) return null;
+  const point: DataPoint = payload[0].payload;
+  const d = new Date(point.iso);
+  const dateStr = d.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const timeStr = d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs shadow-sm">
+      <p className="font-medium text-gray-700">{dateStr} kl. {timeStr}</p>
+      <p className="mt-0.5 text-blue-600">{point.temperature.toFixed(1)} °C</p>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { id: locationId } = useParams<{ id: string }>();
@@ -41,7 +86,7 @@ export default function Dashboard() {
 
   const [sensors, setSensors] = useState<Sensor[]>([]);
   const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
-  const [data, setData] = useState<{ time: string; temperature: number }[]>([]);
+  const [data, setData] = useState<DataPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rawRowCount, setRawRowCount] = useState(0);
@@ -54,16 +99,18 @@ export default function Dashboard() {
       ? data.reduce((sum, d) => sum + d.temperature, 0) / data.length
       : null;
 
-  async function fetchInitialData(sensorId: string) {
+  const fetchData = useCallback(async (sensorId: string, range: TimeRange) => {
     setLoading(true);
     setErrorMessage(null);
     try {
+      const cutoff = getCutoff(range);
       const { data: dbData, error } = await supabase
         .from("temperature")
-        .select("id, created_at, value", { count: "exact" })
+        .select("id, created_at, value")
         .eq("sensor_id", sensorId)
-        .order("created_at", { ascending: false })
-        .limit(100);
+        .gte("created_at", cutoff.toISOString())
+        .order("created_at", { ascending: true })
+        .limit(2000);
 
       if (error) {
         setErrorMessage(error.message);
@@ -72,26 +119,21 @@ export default function Dashboard() {
 
       if (dbData) {
         setRawRowCount(dbData.length);
-        const formatted = dbData
+        const formatted: DataPoint[] = dbData
           .filter((item: TempData) => item.value !== null)
-          .reverse()
           .map((item: TempData) => ({
-            time: new Date(item.created_at).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            }),
+            iso: item.created_at,
             temperature: item.value as number,
           }));
         setData(formatted);
         if (dbData.length > 0) {
-          lastUpdateRef.current = new Date(dbData[0].created_at);
+          lastUpdateRef.current = new Date(dbData[dbData.length - 1].created_at);
         }
       }
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   // Initial load: auth + sensors
   useEffect(() => {
@@ -109,7 +151,7 @@ export default function Dashboard() {
       if (sensorData && sensorData.length > 0) {
         setSensors(sensorData);
         setSelectedSensor(sensorData[0]);
-        await fetchInitialData(sensorData[0].id);
+        await fetchData(sensorData[0].id, "1 dag");
       } else {
         setLoading(false);
       }
@@ -117,14 +159,14 @@ export default function Dashboard() {
     init();
   }, [locationId]);
 
-  // Re-fetch data when selected sensor changes
+  // Re-fetch when sensor or time range changes
   useEffect(() => {
     if (!selectedSensor) return;
     setData([]);
     lastUpdateRef.current = null;
     setSecondsSinceUpdate(null);
-    fetchInitialData(selectedSensor.id);
-  }, [selectedSensor?.id]);
+    fetchData(selectedSensor.id, timeRange);
+  }, [selectedSensor?.id, timeRange]);
 
   // Realtime subscription
   useEffect(() => {
@@ -143,17 +185,12 @@ export default function Dashboard() {
         (payload) => {
           const newRow = payload.new as TempData;
           if (newRow.value === null || (newRow as any).sensor_id !== selectedSensor.id) return;
+          const cutoff = getCutoff(timeRange);
+          if (new Date(newRow.created_at) < cutoff) return;
           lastUpdateRef.current = new Date(newRow.created_at);
           setData((prev) => [
-            ...prev.slice(-99),
-            {
-              time: new Date(newRow.created_at).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              }),
-              temperature: Number(newRow.value),
-            },
+            ...prev.slice(-1999),
+            { iso: newRow.created_at, temperature: Number(newRow.value) },
           ]);
         }
       )
@@ -164,7 +201,7 @@ export default function Dashboard() {
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [selectedSensor?.id]);
+  }, [selectedSensor?.id, timeRange]);
 
   // Seconds since last update ticker
   useEffect(() => {
@@ -244,7 +281,7 @@ export default function Dashboard() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Temperaturgraf over tid</h2>
             <div className="flex gap-1">
-              {(["1 dag", "1 uge", "1 måned"] as TimeRange[]).map((range) => (
+              {TIME_RANGES.map((range) => (
                 <Button
                   key={range}
                   variant={timeRange === range ? "default" : "outline"}
@@ -276,19 +313,19 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#9ca3af" }} />
+                  <XAxis
+                    dataKey="iso"
+                    tickFormatter={(v) => formatXTick(v, timeRange)}
+                    tick={{ fontSize: 11, fill: "#9ca3af" }}
+                    interval="preserveStartEnd"
+                    minTickGap={60}
+                  />
                   <YAxis
                     tick={{ fontSize: 11, fill: "#9ca3af" }}
                     domain={[(dataMin: number) => dataMin - 0.2, (dataMax: number) => dataMax + 0.2]}
                     label={{ value: "°C", angle: -90, position: "insideLeft", fill: "#6b7280" }}
                   />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "1px solid #e5e7eb",
-                      fontSize: "12px",
-                    }}
-                  />
+                  <Tooltip content={<CustomTooltip />} />
                   <Line
                     type="monotone"
                     dataKey="temperature"

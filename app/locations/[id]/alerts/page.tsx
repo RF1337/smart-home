@@ -33,6 +33,8 @@ export default function AlertsPage() {
   const [sensors, setSensors] = useState<Sensor[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const [edits, setEdits] = useState<
     Record<string, { min: string; max: string; enabled: boolean }>
@@ -92,7 +94,8 @@ export default function AlertsPage() {
   async function saveSensor(sensorId: string) {
     const e = edits[sensorId]
     setSaving(sensorId)
-    await supabase
+    setSaveError(null)
+    const { data, error } = await supabase
       .from("sensor")
       .update({
         min_threshold: e.min !== "" ? parseFloat(e.min) : null,
@@ -100,6 +103,14 @@ export default function AlertsPage() {
         alerts_enabled: e.enabled,
       })
       .eq("id", sensorId)
+      .eq("location_id", locationId)
+      .select("id")
+    if (error) setSaveError(error.message)
+    else if (!data || data.length === 0) setSaveError("Ingen rækker opdateret — tjek RLS-politikker i Supabase")
+    else {
+      setSaved(sensorId)
+      setTimeout(() => setSaved(null), 2000)
+    }
     setSaving(null)
   }
 
@@ -130,6 +141,9 @@ export default function AlertsPage() {
             <Bell className="h-4 w-4" />
             Tærskelværdier per sensor
           </div>
+          {saveError && (
+            <p className="px-5 py-2 text-sm text-red-500 bg-red-50">Fejl: {saveError}</p>
+          )}
           {loading && (
             <p className="px-5 py-4 text-sm text-gray-400">Indlæser...</p>
           )}
@@ -207,13 +221,13 @@ export default function AlertsPage() {
                   </div>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant={saved === sensor.id ? "default" : "outline"}
                     onClick={() => saveSensor(sensor.id)}
                     disabled={saving === sensor.id}
                     className="gap-1"
                   >
                     <Check className="h-3.5 w-3.5" />
-                    {saving === sensor.id ? "Gemmer..." : "Gem"}
+                    {saving === sensor.id ? "Gemmer..." : saved === sensor.id ? "Gemt" : "Gem"}
                   </Button>
                 </div>
               </div>
