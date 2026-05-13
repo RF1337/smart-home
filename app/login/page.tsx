@@ -34,7 +34,7 @@ export default function LoginPage() {
           </p>
           <h1 className="mt-3 text-3xl font-bold text-black">Log ind</h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Faa adgang til dit live dashboard.
+            Få adgang til dit live dashboard.
           </p>
 
           <form

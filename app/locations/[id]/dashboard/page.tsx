@@ -98,6 +98,8 @@ export default function Dashboard() {
     data.length > 0
       ? data.reduce((sum, d) => sum + d.temperature, 0) / data.length
       : null;
+  const minTemperature = data.length > 0 ? Math.min(...data.map((d) => d.temperature)) : null;
+  const maxTemperature = data.length > 0 ? Math.max(...data.map((d) => d.temperature)) : null;
 
   const fetchData = useCallback(async (sensorId: string, range: TimeRange) => {
     setLoading(true);
@@ -266,12 +268,23 @@ export default function Dashboard() {
 
           <Card>
             <CardContent className="p-5">
-              <p className="text-sm text-gray-500">Systemstatus</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-green-500" />
-                <span className="text-base font-semibold text-gray-900">Online</span>
+              <p className="text-sm text-gray-500 font-medium">Min / Maks temperatur</p>
+              <div className="mt-2 flex items-center gap-3">
+                <div>
+                  <p className="text-xs text-blue-500">Min</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {minTemperature !== null ? `${minTemperature.toFixed(1)} °C` : "--"}
+                  </p>
+                </div>
+                <span className="text-gray-300 text-2xl font-light">/</span>
+                <div>
+                  <p className="text-xs text-orange-500">Maks</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {maxTemperature !== null ? `${maxTemperature.toFixed(1)} °C` : "--"}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 text-xs text-gray-400">Ingen aktive alarmer</p>
+              <p className="mt-2 text-xs text-gray-400">Inden for den valgte tidsperiode</p>
             </CardContent>
           </Card>
         </div>

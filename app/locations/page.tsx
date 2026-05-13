@@ -120,7 +120,7 @@ export default function LocationsPage() {
       .from("location")
       .select("id, name")
       .eq("join_code", joinCode.trim().toUpperCase())
-      .single()
+      .maybeSingle()
 
     if (locError || !locData) {
       setJoinError("Ugyldig kode — ingen lokation fundet.")
