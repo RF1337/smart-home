@@ -23,6 +23,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 const mainSections = [
   { title: "Dashboard", slug: "dashboard", icon: LayoutDashboard },
@@ -32,14 +37,13 @@ const mainSections = [
 ]
 
 const bottomSections = [
-  { title: "Hjælp",        slug: "help",     icon: CircleHelp },
-  { title: "Indstillinger", slug: "settings", icon: Settings },
+  { title: "Hjælp",         href: "/help",     icon: CircleHelp },
+  { title: "Indstillinger", href: "/settings", icon: Settings },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
 
-  // Extract location id from paths like /locations/[id]/...
   const locationId = pathname.match(/^\/locations\/([^/]+)/)?.[1]
   const onLocationsRoot = pathname === "/locations"
 
@@ -67,16 +71,45 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {mainSections.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild size="lg" className={isActive(item.slug) ? "bg-accent font-bold" : ""}>
-                    <Link href={makeUrl(item.slug)}>
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      <span className="text-base">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+
+              {mainSections.map((item) => {
+                const disabled = !locationId
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="w-full">
+                          <SidebarMenuButton
+                            asChild={!disabled}
+                            size="lg"
+                            className={[
+                              isActive(item.slug) ? "bg-accent font-bold" : "",
+                              disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "",
+                            ].join(" ")}
+                          >
+                            {disabled ? (
+                              <span className="flex items-center gap-2 px-2 py-1.5">
+                                <item.icon className="h-5 w-5 shrink-0" />
+                                <span className="text-base">{item.title}</span>
+                              </span>
+                            ) : (
+                              <Link href={makeUrl(item.slug)}>
+                                <item.icon className="h-5 w-5 shrink-0" />
+                                <span className="text-base">{item.title}</span>
+                              </Link>
+                            )}
+                          </SidebarMenuButton>
+                        </span>
+                      </TooltipTrigger>
+                      {disabled && (
+                        <TooltipContent side="right">
+                          Vælg en lokation først
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -86,8 +119,8 @@ export function AppSidebar() {
         <SidebarMenu>
           {bottomSections.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="lg" className={isActive(item.slug) ? "bg-accent font-bold" : ""}>
-                <Link href={makeUrl(item.slug)}>
+              <SidebarMenuButton asChild size="lg" className={pathname === item.href ? "bg-accent font-bold" : ""}>
+                <Link href={item.href}>
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span className="text-base">{item.title}</span>
                 </Link>

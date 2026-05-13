@@ -91,7 +91,6 @@ export default function HelpPage() {
         </p>
       </div>
 
-      {/* Quick guides */}
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
           <BookOpen className="h-4 w-4" />
@@ -110,7 +109,6 @@ export default function HelpPage() {
         </div>
       </section>
 
-      {/* FAQ */}
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
           <MessageCircleQuestion className="h-4 w-4" />
@@ -125,7 +123,6 @@ export default function HelpPage() {
         </Card>
       </section>
 
-      {/* Support */}
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
           <LifeBuoy className="h-4 w-4" />
@@ -136,10 +133,7 @@ export default function HelpPage() {
             <p className="text-sm font-medium text-gray-800">Har du stadig brug for hjælp?</p>
             <p className="text-sm text-gray-500">
               Kontakt support på{" "}
-              <a
-                href="mailto:support@smartroom.dk"
-                className="text-blue-600 hover:underline"
-              >
+              <a href="mailto:support@smartroom.dk" className="text-blue-600 hover:underline">
                 support@smartroom.dk
               </a>
               , eller tjek dokumentationen på GitHub.

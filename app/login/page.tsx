@@ -17,7 +17,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password)
-      router.push('/dashboard')
+      router.push('/locations')
     } catch (err: any) {
       setErrorMessage(err?.message ?? 'Kunne ikke logge ind')
     } finally {

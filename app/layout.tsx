@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,17 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <TooltipProvider>
-          <SidebarProvider>
-            <AppSidebar />
-
-            <main className="w-full">
-              <div className="border-b px-4 py-3">
-                <SidebarTrigger />
-              </div>
-
-              <div className="flex-1 p-6">{children}</div>
-            </main>
-          </SidebarProvider>
+          {children}
         </TooltipProvider>
       </body>
     </html>
