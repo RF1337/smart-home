@@ -54,6 +54,7 @@ export default function DevicesPage() {
   const router = useRouter()
 
   const [sensors, setSensors] = useState<Sensor[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [activationCode, setActivationCode] = useState("")
@@ -75,6 +76,7 @@ export default function DevicesPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.replace("/login"); return }
+      setUserId(user.id)
       await fetchSensors()
       setLoading(false)
     }
@@ -96,7 +98,7 @@ export default function DevicesPage() {
       .limit(1)
 
     if (findError) {
-      setAddError(findError.message)
+      setAddError(`Søgningsfejl: ${findError.message}`)
       setAdding(false)
       return
     }
@@ -109,18 +111,26 @@ export default function DevicesPage() {
 
     const sensor = matches[0]
 
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from("sensor")
       .update({
         name: deviceName.trim(),
         location_id: locationId,
         is_active: true,
         activated_at: new Date().toISOString(),
+        activated_by: userId,
       })
       .eq("id", sensor.id)
+      .select()
 
     if (updateError) {
-      setAddError(updateError.message)
+      setAddError(`Opdateringsfejl: ${updateError.message}`)
+      setAdding(false)
+      return
+    }
+
+    if (!updated || updated.length === 0) {
+      setAddError(`Opdatering blokeret af RLS — sensorens location_id matcher muligvis ikke din lokation. Sensor-id: ${sensor.id}`)
       setAdding(false)
       return
     }

@@ -11,7 +11,7 @@ export default function HomePage() {
     const resolveSession = async () => {
       const { data } = await supabase.auth.getUser();
 
-      router.replace(data.user ? "/dashboard" : "/login");
+      router.replace(data.user ? "/locations" : "/login");
     };
 
     resolveSession();

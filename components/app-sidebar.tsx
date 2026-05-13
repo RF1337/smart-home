@@ -9,6 +9,7 @@ import {
   Cpu,
   Settings,
   CircleHelp,
+  Home,
 } from "lucide-react"
 
 import {
@@ -23,44 +24,31 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const mainItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Historik",
-    url: "/history",
-    icon: ChartLine,
-  },
-  {
-    title: "Alarmer",
-    url: "/alerts",
-    icon: Bell,
-  },
-  {
-    title: "Enheder",
-    url: "/devices",
-    icon: Cpu,
-  },
+const mainSections = [
+  { title: "Dashboard", slug: "dashboard", icon: LayoutDashboard },
+  { title: "Historik",  slug: "history",   icon: ChartLine },
+  { title: "Alarmer",   slug: "alerts",    icon: Bell },
+  { title: "Enheder",   slug: "devices",   icon: Cpu },
 ]
 
-const bottomItems = [
-  {
-    title: "Hjælp",
-    url: "/help",
-    icon: CircleHelp,
-  },
-  {
-    title: "Indstillinger",
-    url: "/settings",
-    icon: Settings,
-  },
+const bottomSections = [
+  { title: "Hjælp",        slug: "help",     icon: CircleHelp },
+  { title: "Indstillinger", slug: "settings", icon: Settings },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
+
+  // Extract location id from paths like /locations/[id]/...
+  const locationId = pathname.match(/^\/locations\/([^/]+)/)?.[1]
+  const onLocationsRoot = pathname === "/locations"
+
+  const makeUrl = (slug: string) =>
+    locationId ? `/locations/${locationId}/${slug}` : "#"
+
+  const isActive = (slug: string) =>
+    !!locationId && pathname === `/locations/${locationId}/${slug}`
+
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
@@ -71,19 +59,24 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => {
-                const isActive = pathname === item.url
-                return (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild size="lg" className={onLocationsRoot ? "bg-accent font-bold" : ""}>
+                  <Link href="/locations">
+                    <Home className="h-5 w-5 shrink-0" />
+                    <span className="text-base">Hjem</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {mainSections.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild size="lg" className={isActive ? "bg-accent font-bold" : ""}>
-                    <Link href={item.url}>
+                  <SidebarMenuButton asChild size="lg" className={isActive(item.slug) ? "bg-accent font-bold" : ""}>
+                    <Link href={makeUrl(item.slug)}>
                       <item.icon className="h-5 w-5 shrink-0" />
                       <span className="text-base">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                )
-              })}
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -91,19 +84,16 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          {bottomItems.map((item) => {
-            const isActive = pathname === item.url
-            return (
+          {bottomSections.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="lg" className={isActive ? "bg-accent font-bold" : ""}>
-                <Link href={item.url}>
+              <SidebarMenuButton asChild size="lg" className={isActive(item.slug) ? "bg-accent font-bold" : ""}>
+                <Link href={makeUrl(item.slug)}>
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span className="text-base">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            )
-          })}
+          ))}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

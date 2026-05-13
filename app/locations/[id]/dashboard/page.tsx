@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   LineChart,
   Line,
@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tables } from "@/types/database.types";
+
+type Sensor = Tables<"sensor">;
 
 interface TempData {
   id: string;
@@ -30,18 +33,18 @@ interface TempData {
 
 type TimeRange = "1 dag" | "1 uge" | "1 måned";
 
-const LOCATIONS = ["Stue", "Soveværelse", "Køkken", "Kontor"];
-
 export default function Dashboard() {
+  const { id: locationId } = useParams<{ id: string }>();
   const router = useRouter();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const lastUpdateRef = useRef<Date | null>(null);
 
+  const [sensors, setSensors] = useState<Sensor[]>([]);
+  const [selectedSensor, setSelectedSensor] = useState<Sensor | null>(null);
   const [data, setData] = useState<{ time: string; temperature: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rawRowCount, setRawRowCount] = useState(0);
-  const [location, setLocation] = useState("Stue");
   const [timeRange, setTimeRange] = useState<TimeRange>("1 dag");
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null);
 
@@ -51,33 +54,24 @@ export default function Dashboard() {
       ? data.reduce((sum, d) => sum + d.temperature, 0) / data.length
       : null;
 
-  async function checkUser() {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      setLoading(false);
-      router.push("/login");
-      return false;
-    }
-    return true;
-  }
-
-  async function fetchInitialData() {
+  async function fetchInitialData(sensorId: string) {
+    setLoading(true);
+    setErrorMessage(null);
     try {
       const { data: dbData, error } = await supabase
         .from("temperature")
         .select("id, created_at, value", { count: "exact" })
+        .eq("sensor_id", sensorId)
         .order("created_at", { ascending: false })
         .limit(100);
 
       if (error) {
         setErrorMessage(error.message);
-        console.error(error);
         return;
       }
 
       if (dbData) {
         setRawRowCount(dbData.length);
-
         const formatted = dbData
           .filter((item: TempData) => item.value !== null)
           .reverse()
@@ -89,9 +83,7 @@ export default function Dashboard() {
             }),
             temperature: item.value as number,
           }));
-
         setData(formatted);
-
         if (dbData.length > 0) {
           lastUpdateRef.current = new Date(dbData[0].created_at);
         }
@@ -101,7 +93,80 @@ export default function Dashboard() {
     }
   }
 
-  // Tick "seconds since last update"
+  // Initial load: auth + sensors
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/login"); return; }
+
+      const { data: sensorData } = await supabase
+        .from("sensor")
+        .select("*")
+        .eq("location_id", locationId)
+        .eq("is_active", true)
+        .order("name", { ascending: true });
+
+      if (sensorData && sensorData.length > 0) {
+        setSensors(sensorData);
+        setSelectedSensor(sensorData[0]);
+        await fetchInitialData(sensorData[0].id);
+      } else {
+        setLoading(false);
+      }
+    }
+    init();
+  }, [locationId]);
+
+  // Re-fetch data when selected sensor changes
+  useEffect(() => {
+    if (!selectedSensor) return;
+    setData([]);
+    lastUpdateRef.current = null;
+    setSecondsSinceUpdate(null);
+    fetchInitialData(selectedSensor.id);
+  }, [selectedSensor?.id]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!selectedSensor) return;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase
+      .channel(`realtime-temperature-${selectedSensor.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "temperature" },
+        (payload) => {
+          const newRow = payload.new as TempData;
+          if (newRow.value === null || (newRow as any).sensor_id !== selectedSensor.id) return;
+          lastUpdateRef.current = new Date(newRow.created_at);
+          setData((prev) => [
+            ...prev.slice(-99),
+            {
+              time: new Date(newRow.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
+              temperature: Number(newRow.value),
+            },
+          ]);
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [selectedSensor?.id]);
+
+  // Seconds since last update ticker
   useEffect(() => {
     const interval = setInterval(() => {
       if (lastUpdateRef.current) {
@@ -110,56 +175,6 @@ export default function Dashboard() {
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    let isCancelled = false;
-
-    const init = async () => {
-      const isLoggedIn = await checkUser();
-      if (!isLoggedIn || isCancelled) return;
-
-      await fetchInitialData();
-      if (isCancelled || channelRef.current) return;
-
-      const realtimeChannel = supabase
-        .channel("realtime-temperature")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "temperature" },
-          (payload) => {
-            const newRow = payload.new as TempData;
-            if (newRow.value === null) return;
-
-            lastUpdateRef.current = new Date(newRow.created_at);
-
-            setData((prev) => [
-              ...prev.slice(-99),
-              {
-                time: new Date(newRow.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                }),
-                temperature: Number(newRow.value),
-              },
-            ]);
-          }
-        )
-        .subscribe();
-
-      channelRef.current = realtimeChannel;
-    };
-
-    init();
-
-    return () => {
-      isCancelled = true;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
   }, []);
 
   const lastUpdatedLabel =
@@ -173,18 +188,18 @@ export default function Dashboard() {
     <div className="min-h-[calc(100vh-57px)] bg-gray-50 px-6 py-6">
       <div className="w-full space-y-6">
 
-        {/* Location header */}
+        {/* Sensor selector */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-1 text-xl font-bold text-gray-900 hover:text-gray-700">
-              Lokation: {location}
+              Sensor: {selectedSensor?.name ?? "Ingen sensorer"}
               <ChevronDown className="h-5 w-5" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {LOCATIONS.map((loc) => (
-              <DropdownMenuItem key={loc} onSelect={() => setLocation(loc)}>
-                {loc}
+            {sensors.map((s) => (
+              <DropdownMenuItem key={s.id} onSelect={() => setSelectedSensor(s)}>
+                {s.name}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -192,7 +207,6 @@ export default function Dashboard() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {/* Current temperature */}
           <Card>
             <CardContent className="p-5">
               <p className="text-sm text-gray-500">Aktuel Temperatur</p>
@@ -203,7 +217,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Average temperature */}
           <Card>
             <CardContent className="p-5">
               <p className="text-sm text-blue-600 font-medium">Gennemsnitstemperatur</p>
@@ -214,7 +227,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* System status */}
           <Card>
             <CardContent className="p-5">
               <p className="text-sm text-gray-500">Systemstatus</p>
@@ -227,7 +239,7 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Chart section */}
+        {/* Chart */}
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Temperaturgraf over tid</h2>
@@ -252,12 +264,12 @@ export default function Dashboard() {
             <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               Kunne ikke hente temperaturdata: {errorMessage}
             </p>
+          ) : !selectedSensor ? (
+            <p className="py-10 text-center text-sm text-gray-500">Ingen aktive sensorer på denne lokation.</p>
           ) : data.length === 0 ? (
             <div className="space-y-1 py-10 text-center text-sm text-gray-500">
               <p>Ingen temperaturpunkter at vise.</p>
-              <p className="text-xs text-gray-400">
-                Rækker fra Supabase: {rawRowCount}
-              </p>
+              <p className="text-xs text-gray-400">Rækker fra Supabase: {rawRowCount}</p>
             </div>
           ) : (
             <div className="h-96 w-full sm:h-[480px]">
@@ -295,3 +307,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
