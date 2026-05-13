@@ -95,6 +95,11 @@ export default function Dashboard() {
   const [secondsSinceUpdate, setSecondsSinceUpdate] = useState<number | null>(null);
 
   const latestTemperature = data.length > 0 ? data[data.length - 1].temperature : null;
+  const previousTemperature = data.length > 1 ? data[data.length - 2].temperature : null;
+  const temperatureDelta =
+    latestTemperature !== null && previousTemperature !== null
+      ? latestTemperature - previousTemperature
+      : null;
   const averageTemperature =
     data.length > 0
       ? data.reduce((sum, d) => sum + d.temperature, 0) / data.length
@@ -218,12 +223,14 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const isOnline = secondsSinceUpdate !== null && secondsSinceUpdate < 120;
+
   const lastUpdatedLabel =
     secondsSinceUpdate === null
       ? "Opdaterer..."
       : secondsSinceUpdate < 60
-      ? `Sidst opdateret for ${secondsSinceUpdate} sekunder siden`
-      : `Sidst opdateret for ${Math.floor(secondsSinceUpdate / 60)} minutter siden`;
+      ? `${secondsSinceUpdate}s siden`
+      : `${Math.floor(secondsSinceUpdate / 60)} min siden`;
 
   return (
     <div className="w-full space-y-6">
@@ -247,45 +254,69 @@ export default function Dashboard() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Card className="border border-border ring-0">
+          {/* Card 1: Aktuel temperatur */}
+          <Card className="border border-border ring-0 shadow-sm">
             <CardContent className="p-5">
-              <p className="text-sm text-gray-500">Aktuel Temperatur</p>
-              <p className="mt-1 text-4xl font-bold text-gray-900">
-                {latestTemperature !== null ? `${latestTemperature.toFixed(1)} °C` : "--"}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Aktuel temperatur</span>
+                <span className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  isOnline ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"
+                }`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${
+                    isOnline ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                  }`} />
+                  {isOnline ? "Live" : "Offline"}
+                </span>
+              </div>
+              <p className="mt-3 text-5xl font-bold tracking-tight text-gray-900">
+                {latestTemperature !== null ? `${latestTemperature.toFixed(1)}°` : "--"}
+                <span className="ml-1 text-2xl font-normal text-gray-400">C</span>
               </p>
-              <p className="mt-2 text-xs text-gray-400">{lastUpdatedLabel}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-xs text-gray-400">Sidst opdateret: {lastUpdatedLabel}</p>
+                {temperatureDelta !== null && (
+                  <span className={`text-xs font-medium ${
+                    temperatureDelta > 0 ? "text-orange-500" : temperatureDelta < 0 ? "text-blue-500" : "text-gray-400"
+                  }`}>
+                    {temperatureDelta > 0 ? `+${temperatureDelta.toFixed(1)}` : temperatureDelta.toFixed(1)}° siden sidst
+                  </span>
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-border ring-0">
+          {/* Card 2: Gennemsnit */}
+          <Card className="border border-border ring-0 shadow-sm">
             <CardContent className="p-5">
-              <p className="text-sm text-blue-600 font-medium">Gennemsnitstemperatur</p>
-              <p className="mt-1 text-4xl font-bold text-gray-900">
-                {averageTemperature !== null ? `${averageTemperature.toFixed(1)} °C` : "--"}
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Gennemsnit</span>
+              <p className="mt-3 text-5xl font-bold tracking-tight text-gray-900">
+                {averageTemperature !== null ? `${averageTemperature.toFixed(1)}°` : "--"}
+                <span className="ml-1 text-2xl font-normal text-gray-400">C</span>
               </p>
-              <p className="mt-2 text-xs text-gray-400">Målt over den valgte tidsperiode</p>
+              <p className="mt-3 text-xs text-gray-400">Baseret på {data.length} målinger i perioden</p>
             </CardContent>
           </Card>
 
-          <Card className="border border-border ring-0">
+          {/* Card 3: Min/Maks */}
+          <Card className="border border-border ring-0 shadow-sm">
             <CardContent className="p-5">
-              <p className="text-sm text-gray-500 font-medium">Min / Maks temperatur</p>
-              <div className="mt-2 flex items-center gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Min / Maks</span>
+              <div className="mt-3 flex items-end gap-4">
                 <div>
-                  <p className="text-xs text-blue-500">Min</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {minTemperature !== null ? `${minTemperature.toFixed(1)} °C` : "--"}
+                  <p className="mb-1 text-xs font-medium text-blue-500">MIN</p>
+                  <p className="text-3xl font-bold tracking-tight text-gray-900">
+                    {minTemperature !== null ? `${minTemperature.toFixed(1)}°` : "--"}
                   </p>
                 </div>
-                <span className="text-gray-300 text-2xl font-light">/</span>
+                <span className="mb-1 text-2xl text-gray-200 font-light">/</span>
                 <div>
-                  <p className="text-xs text-orange-500">Maks</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {maxTemperature !== null ? `${maxTemperature.toFixed(1)} °C` : "--"}
+                  <p className="mb-1 text-xs font-medium text-orange-500">MAKS</p>
+                  <p className="text-3xl font-bold tracking-tight text-gray-900">
+                    {maxTemperature !== null ? `${maxTemperature.toFixed(1)}°` : "--"}
                   </p>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-400">Inden for den valgte tidsperiode</p>
+              <p className="mt-3 text-xs text-gray-400">Inden for den valgte tidsperiode</p>
             </CardContent>
           </Card>
         </div>
