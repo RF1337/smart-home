@@ -10,7 +10,6 @@ import {
   Settings,
   CircleHelp,
   Home,
-  Zap,
 } from "lucide-react"
 
 import {
@@ -49,16 +48,7 @@ function SidebarLogo() {
 
   return (
     <div className="flex h-10 items-center overflow-hidden">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-        <Zap className="h-4 w-4 text-primary-foreground" />
-      </div>
-      <span
-        className={`ml-2.5 whitespace-nowrap text-lg font-bold transition-[opacity,width] duration-300 ${
-          collapsed ? "w-0 opacity-0" : "opacity-100"
-        }`}
-      >
-        SmartHome
-      </span>
+      <span className="whitespace-nowrap text-lg font-bold">SmartHome</span>
     </div>
   )
 }

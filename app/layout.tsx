@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartRoom",
+  title: "SmartHome",
   description: "Get an overview of the temperature in your room with SmartRoom",
 };
 
