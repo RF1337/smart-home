@@ -57,6 +57,8 @@ export default function DevicesPage() {
   const [deviceName, setDeviceName] = useState("")
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
+  const [codeError, setCodeError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
 
   async function fetchSensors() {
     const { data, error } = await supabase
@@ -81,8 +83,22 @@ export default function DevicesPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    setAdding(true)
+    setCodeError(null)
+    setNameError(null)
     setAddError(null)
+
+    let valid = true
+    if (!activationCode.trim()) {
+      setCodeError('Aktiveringskode må ikke være tom.')
+      valid = false
+    }
+    if (!deviceName.trim()) {
+      setNameError('Enhedsnavn må ikke være tomt.')
+      valid = false
+    }
+    if (!valid) return
+
+    setAdding(true)
 
     const code = activationCode.trim().toUpperCase()
 
@@ -142,12 +158,6 @@ export default function DevicesPage() {
     setActivationCode("")
     setDeviceName("")
     setSheetOpen(false)
-    await fetchSensors()
-    setAdding(false)
-    toast.success(`Enhed "${deviceName.trim()}" tilføjet!`)
-  }
-
-  return (
     <div className="w-full">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
 
@@ -168,7 +178,7 @@ export default function DevicesPage() {
                   <SheetTitle>Tilføj enhed</SheetTitle>
                 </SheetHeader>
 
-                <form onSubmit={handleAdd} className="mt-6 space-y-4 px-4">
+                <form onSubmit={handleAdd} className="mt-6 space-y-4 px-4" noValidate>
                   <div className="space-y-1">
                     <label className="text-sm font-medium" htmlFor="activation-code">
                       Aktiveringskode <span className="text-destructive">*</span>
@@ -177,9 +187,10 @@ export default function DevicesPage() {
                       id="activation-code"
                       placeholder="f.eks. AB12CD34"
                       value={activationCode}
-                      onChange={(e) => setActivationCode(e.target.value)}
-                      required
+                      onChange={(e) => { setActivationCode(e.target.value); setCodeError(null) }}
+                      className={codeError ? 'border-red-400 focus-visible:ring-red-300' : ''}
                     />
+                    {codeError && <p className="text-xs text-red-600">{codeError}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -190,9 +201,10 @@ export default function DevicesPage() {
                       id="device-name"
                       placeholder="f.eks. Stue sensor"
                       value={deviceName}
-                      onChange={(e) => setDeviceName(e.target.value)}
-                      required
+                      onChange={(e) => { setDeviceName(e.target.value); setNameError(null) }}
+                      className={nameError ? 'border-red-400 focus-visible:ring-red-300' : ''}
                     />
+                    {nameError && <p className="text-xs text-red-600">{nameError}</p>}
                   </div>
 
                   {addError && (

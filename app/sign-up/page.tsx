@@ -6,17 +6,40 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export default function SignupPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const handleSignup = async () => {
-    setIsSubmitting(true)
+    let valid = true
+    setEmailError(null)
+    setPasswordError(null)
     setErrorMessage(null)
 
+    if (!email.trim()) {
+      setEmailError('Email må ikke være tom.')
+      valid = false
+    } else if (!EMAIL_RE.test(email.trim())) {
+      setEmailError('Indtast en gyldig email-adresse.')
+      valid = false
+    }
+    if (!password) {
+      setPasswordError('Adgangskode må ikke være tom.')
+      valid = false
+    } else if (password.length < 6) {
+      setPasswordError('Adgangskode skal være mindst 6 tegn.')
+      valid = false
+    }
+    if (!valid) return
+
+    setIsSubmitting(true)
     try {
       await signUp(email, password)
       toast.success('Konto oprettet!')
@@ -44,34 +67,43 @@ export default function SignupPage() {
 
           <form
             className="mt-7 space-y-4"
+            noValidate
             onSubmit={(e) => {
               e.preventDefault()
               handleSignup()
             }}
           >
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-black outline-none transition placeholder:text-zinc-400 focus:border-blue-600"
-              required
-            />
+            <div className="space-y-1">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setEmailError(null) }}
+                className={`w-full rounded-xl border bg-white px-4 py-3 text-black outline-none transition placeholder:text-zinc-400 focus:border-blue-600 ${
+                  emailError ? 'border-red-400 focus:border-red-500' : 'border-zinc-200'
+                }`}
+              />
+              {emailError && <p className="pl-1 text-xs text-red-600">{emailError}</p>}
+            </div>
 
-            <input
-              type="password"
-              placeholder="Adgangskode"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-black outline-none transition placeholder:text-zinc-400 focus:border-blue-600"
-              required
-            />
+            <div className="space-y-1">
+              <input
+                type="password"
+                placeholder="Adgangskode"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setPasswordError(null) }}
+                className={`w-full rounded-xl border bg-white px-4 py-3 text-black outline-none transition placeholder:text-zinc-400 focus:border-blue-600 ${
+                  passwordError ? 'border-red-400 focus:border-red-500' : 'border-zinc-200'
+                }`}
+              />
+              {passwordError && <p className="pl-1 text-xs text-red-600">{passwordError}</p>}
+            </div>
 
-            {errorMessage ? (
+            {errorMessage && (
               <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {errorMessage}
               </p>
-            ) : null}
+            )}
 
             <button
               type="submit"

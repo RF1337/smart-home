@@ -36,6 +36,7 @@ export default function AlertsPage() {
   const [saving, setSaving] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [thresholdErrors, setThresholdErrors] = useState<Record<string, string | null>>({})
 
   const [edits, setEdits] = useState<
     Record<string, { min: string; max: string; enabled: boolean }>
@@ -94,8 +95,28 @@ export default function AlertsPage() {
 
   async function saveSensor(sensorId: string) {
     const e = edits[sensorId]
-    setSaving(sensorId)
     setSaveError(null)
+    setThresholdErrors((prev) => ({ ...prev, [sensorId]: null }))
+
+    if (e.enabled) {
+      const minVal = e.min !== '' ? parseFloat(e.min) : null
+      const maxVal = e.max !== '' ? parseFloat(e.max) : null
+
+      if (minVal !== null && (minVal < -50 || minVal > 100)) {
+        setThresholdErrors((prev) => ({ ...prev, [sensorId]: 'Min-værdien skal være mellem -50 og 100 °C.' }))
+        return
+      }
+      if (maxVal !== null && (maxVal < -50 || maxVal > 100)) {
+        setThresholdErrors((prev) => ({ ...prev, [sensorId]: 'Maks-værdien skal være mellem -50 og 100 °C.' }))
+        return
+      }
+      if (minVal !== null && maxVal !== null && minVal >= maxVal) {
+        setThresholdErrors((prev) => ({ ...prev, [sensorId]: 'Min-værdien skal være lavere end maks-værdien.' }))
+        return
+      }
+    }
+
+    setSaving(sensorId)
     const { data, error } = await supabase
       .from("sensor")
       .update({
@@ -200,54 +221,63 @@ export default function AlertsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <ThermometerSun className="h-4 w-4 text-blue-400" />
-                    <span className="text-xs text-gray-500">Min</span>
-                    <Input
-                      type="number"
-                      placeholder="°C"
-                      value={e.min}
-                      onChange={(ev) =>
-                        setEdits((prev) => ({
-                          ...prev,
-                          [sensor.id]: { ...prev[sensor.id], min: ev.target.value },
-                        }))
+                <div className="flex flex-col items-start gap-1.5 sm:items-end">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <ThermometerSun className="h-4 w-4 text-blue-400" />
+                      <span className="text-xs text-gray-500">Min</span>
+                      <Input
+                        type="number"
+                        placeholder="°C"
+                        value={e.min}
+                        onChange={(ev) =>
+                          setEdits((prev) => ({
+                            ...prev,
+                            [sensor.id]: { ...prev[sensor.id], min: ev.target.value },
+                          }))
+                        }
+                        disabled={!e.enabled}
+                        className={`w-24 text-center ${
+                          thresholdErrors[sensor.id] ? 'border-red-400 focus-visible:ring-red-300' : ''
+                        }`}
+                      />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <ThermometerSun className="h-4 w-4 text-orange-400" />
+                      <span className="text-xs text-gray-500">Maks</span>
+                      <Input
+                        type="number"
+                        placeholder="°C"
+                        value={e.max}
+                        onChange={(ev) =>
+                          setEdits((prev) => ({
+                            ...prev,
+                            [sensor.id]: { ...prev[sensor.id], max: ev.target.value },
+                          }))
+                        }
+                        disabled={!e.enabled}
+                        className={`w-24 text-center ${
+                          thresholdErrors[sensor.id] ? 'border-red-400 focus-visible:ring-red-300' : ''
+                        }`}
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={saved === sensor.id ? "default" : "outline"}
+                      onClick={() => saveSensor(sensor.id)}
+                      disabled={saving === sensor.id}
+                      className="gap-1"
+                    >
+                      {saving === sensor.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Check className="h-3.5 w-3.5" />
                       }
-                      disabled={!e.enabled}
-                      className="w-24 text-center"
-                    />
+                      {saving === sensor.id ? "Gemmer..." : saved === sensor.id ? "Gemt" : "Gem"}
+                    </Button>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <ThermometerSun className="h-4 w-4 text-orange-400" />
-                    <span className="text-xs text-gray-500">Maks</span>
-                    <Input
-                      type="number"
-                      placeholder="°C"
-                      value={e.max}
-                      onChange={(ev) =>
-                        setEdits((prev) => ({
-                          ...prev,
-                          [sensor.id]: { ...prev[sensor.id], max: ev.target.value },
-                        }))
-                      }
-                      disabled={!e.enabled}
-                      className="w-24 text-center"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={saved === sensor.id ? "default" : "outline"}
-                    onClick={() => saveSensor(sensor.id)}
-                    disabled={saving === sensor.id}
-                    className="gap-1"
-                  >
-                    {saving === sensor.id
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <Check className="h-3.5 w-3.5" />
-                    }
-                    {saving === sensor.id ? "Gemmer..." : saved === sensor.id ? "Gemt" : "Gem"}
-                  </Button>
+                  {thresholdErrors[sensor.id] && (
+                    <p className="text-xs text-red-600">{thresholdErrors[sensor.id]}</p>
+                  )}
                 </div>
               </div>
             )
