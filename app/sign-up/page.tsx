@@ -17,8 +17,7 @@ export default function SignupPage() {
 
     try {
       await signUp(email, password)
-      alert('Check your email for confirmation')
-      router.push('/login')
+      router.push('/locations')
     } catch (err: any) {
       setErrorMessage(err?.message ?? 'Kunne ikke oprette konto')
     } finally {

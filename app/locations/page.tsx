@@ -15,7 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { MapPin, Plus } from "lucide-react"
+import { MapPin, Plus, LogIn } from "lucide-react"
 
 type Location = Tables<"location">
 
@@ -24,10 +24,14 @@ export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
   const [loading, setLoading] = useState(true)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [joinSheetOpen, setJoinSheetOpen] = useState(false)
   const [name, setName] = useState("")
   const [address, setAddress] = useState("")
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [joinCode, setJoinCode] = useState("")
+  const [joining, setJoining] = useState(false)
+  const [joinError, setJoinError] = useState<string | null>(null)
 
   async function loadLocations(userId: string) {
     const { data, error } = await supabase
@@ -103,6 +107,57 @@ export default function LocationsPage() {
     setCreating(false)
   }
 
+  async function handleJoin(e: React.FormEvent) {
+    e.preventDefault()
+    setJoining(true)
+    setJoinError(null)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.replace("/login"); return }
+
+    // Find location by join_code
+    const { data: locData, error: locError } = await supabase
+      .from("location")
+      .select("id, name")
+      .eq("join_code", joinCode.trim().toUpperCase())
+      .single()
+
+    if (locError || !locData) {
+      setJoinError("Ugyldig kode — ingen lokation fundet.")
+      setJoining(false)
+      return
+    }
+
+    // Check if already a member
+    const { data: existing } = await supabase
+      .from("user_location")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .eq("location_id", locData.id)
+      .maybeSingle()
+
+    if (existing) {
+      setJoinError("Du er allerede tilknyttet denne lokation.")
+      setJoining(false)
+      return
+    }
+
+    const { error: linkError } = await supabase
+      .from("user_location")
+      .insert({ user_id: user.id, location_id: locData.id })
+
+    if (linkError) {
+      setJoinError(linkError.message)
+      setJoining(false)
+      return
+    }
+
+    setJoinCode("")
+    setJoinSheetOpen(false)
+    await loadLocations(user.id)
+    setJoining(false)
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -120,6 +175,45 @@ export default function LocationsPage() {
             Vælg en lokation for at se dens dashboard.
           </p>
         </div>
+
+        <div className="flex gap-2">
+        <Sheet open={joinSheetOpen} onOpenChange={setJoinSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline">
+              <LogIn className="h-4 w-4 mr-2" />
+              Tilslut med kode
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Tilslut lokation</SheetTitle>
+            </SheetHeader>
+            <form onSubmit={handleJoin} className="mt-6 space-y-4 px-4">
+              <div className="space-y-1">
+                <label className="text-sm font-medium" htmlFor="join-code">
+                  Kode <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  id="join-code"
+                  placeholder="f.eks. AB12CD"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  required
+                  className="uppercase tracking-widest"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Indtast join-koden du har fået af lokationens ejer.
+                </p>
+              </div>
+              {joinError && (
+                <p className="text-sm text-destructive">{joinError}</p>
+              )}
+              <Button type="submit" className="w-full" disabled={joining}>
+                {joining ? "Tilslutter..." : "Tilslut"}
+              </Button>
+            </form>
+          </SheetContent>
+        </Sheet>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
@@ -169,6 +263,7 @@ export default function LocationsPage() {
             </form>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
 
       {locations.length === 0 ? (
@@ -189,6 +284,11 @@ export default function LocationsPage() {
                     {loc.address && (
                       <p className="text-sm text-muted-foreground truncate">
                         {loc.address}
+                      </p>
+                    )}
+                    {loc.join_code && (
+                      <p className="text-xs text-muted-foreground mt-1 font-mono tracking-widest">
+                        Kode: {loc.join_code}
                       </p>
                     )}
                   </div>
