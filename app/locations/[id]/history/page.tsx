@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, CalendarSearch, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -128,13 +128,27 @@ export default function HistoryPage() {
         )}
 
         {!searched && !loading && (
-          <p className="text-sm text-gray-400">
-            Vælg en tidsperiode og tryk Filtrer for at se data.
-          </p>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
+            <div className="mb-4 rounded-full bg-primary/10 p-4">
+              <CalendarSearch className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">Vælg en tidsperiode</h2>
+            <p className="mt-1 max-w-xs text-sm text-gray-500">
+              Angiv en start- og slutdato ovenfor og tryk på Filtrer for at hente historisk data.
+            </p>
+          </div>
         )}
 
         {searched && !loading && rows.length === 0 && !error && (
-          <p className="text-sm text-gray-500">Ingen data fundet for den valgte periode.</p>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
+            <div className="mb-4 rounded-full bg-muted p-4">
+              <SearchX className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">Ingen data fundet</h2>
+            <p className="mt-1 max-w-xs text-sm text-gray-500">
+              Der blev ikke registreret nogen målinger i den valgte periode. Prøv et andet interval.
+            </p>
+          </div>
         )}
 
         {rows.length > 0 && (

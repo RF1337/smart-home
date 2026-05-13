@@ -22,7 +22,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Cpu } from "lucide-react"
 import { toast } from "sonner"
 
 type Sensor = Tables<"sensor">
@@ -208,6 +208,21 @@ export default function DevicesPage() {
             </Sheet>
           </div>
 
+          {!loading && sensors.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
+              <div className="mb-4 rounded-full bg-primary/10 p-4">
+                <Cpu className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">Ingen enheder tilknyttet</h2>
+              <p className="mt-1 max-w-xs text-sm text-gray-500">
+                Tilføj din første enhed ved at indtaste aktiveringskoden fra sensoren.
+              </p>
+              <Button className="mt-6 gap-2" onClick={() => setSheetOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Tilføj enhed
+              </Button>
+            </div>
+          ) : (
           <div className="rounded-xl border overflow-hidden">
             <Table>
               <TableHeader>
@@ -222,12 +237,6 @@ export default function DevicesPage() {
                   <TableRow>
                     <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                       Indlæser...
-                    </TableCell>
-                  </TableRow>
-                ) : sensors.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                      Ingen enheder tilknyttet endnu.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -253,8 +262,7 @@ export default function DevicesPage() {
                 )}
               </TableBody>
             </Table>
-          </div>
-        </div>
+          </div>          )}        </div>
 
         {/* Right: setup guide */}
         <div className="rounded-xl border bg-card p-8">

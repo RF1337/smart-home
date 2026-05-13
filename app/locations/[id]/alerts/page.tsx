@@ -158,9 +158,15 @@ export default function AlertsPage() {
             <p className="px-5 py-4 text-sm text-gray-400">Indlæser...</p>
           )}
           {!loading && sensors.length === 0 && (
-            <p className="px-5 py-4 text-sm text-gray-400">
-              Ingen aktive sensorer på denne lokation.
-            </p>
+            <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+              <div className="mb-3 rounded-full bg-primary/10 p-3">
+                <Bell className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-semibold text-gray-800">Ingen aktive sensorer</p>
+              <p className="mt-1 max-w-xs text-xs text-gray-400">
+                Tilføj og aktiver en enhed under Enheder for at opsætte alarmgrænser.
+              </p>
+            </div>
           )}
           {sensors.map((sensor) => {
             const e = edits[sensor.id]
@@ -266,8 +272,16 @@ export default function AlertsPage() {
           <TableBody>
             {!loading && alerts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-sm text-gray-400 py-8">
-                  Ingen alarmer endnu
+                <TableCell colSpan={7} className="py-16 text-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="rounded-full bg-muted p-3">
+                      <TriangleAlert className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800">Ingen alarmer endnu</p>
+                    <p className="max-w-xs text-xs text-gray-400">
+                      Alarmer udløses automatisk, når en sensor overskrider dine opsatte grænser.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

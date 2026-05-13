@@ -282,9 +282,25 @@ export default function LocationsPage() {
       </div>
 
       {locations.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Du har ingen lokationer tilknyttet endnu.
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-20 text-center">
+          <div className="mb-4 rounded-full bg-primary/10 p-4">
+            <MapPin className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">Ingen lokationer endnu</h2>
+          <p className="mt-1 max-w-xs text-sm text-gray-500">
+            Opret din første lokation, eller tilslut dig en eksisterende med en invite-kode.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button onClick={() => setSheetOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Opret lokation
+            </Button>
+            <Button variant="outline" onClick={() => setJoinSheetOpen(true)}>
+              <LogIn className="mr-2 h-4 w-4" />
+              Tilslut med kode
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {locations.map((loc) => (
