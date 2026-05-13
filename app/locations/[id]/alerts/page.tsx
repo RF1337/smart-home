@@ -7,7 +7,7 @@ import { Tables } from "@/types/database.types"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Bell, TriangleAlert, ThermometerSun, Check } from "lucide-react"
+import { Bell, TriangleAlert, ThermometerSun, Check, Loader2 } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -226,7 +226,10 @@ export default function AlertsPage() {
                     disabled={saving === sensor.id}
                     className="gap-1"
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    {saving === sensor.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <Check className="h-3.5 w-3.5" />
+                    }
                     {saving === sensor.id ? "Gemmer..." : saved === sensor.id ? "Gemt" : "Gem"}
                   </Button>
                 </div>

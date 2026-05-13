@@ -12,7 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -292,18 +292,22 @@ export default function Dashboard() {
         <div className="rounded-xl border border-border bg-white p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-gray-900">Temperaturgraf over tid</h2>
-            <div className="flex gap-1">
+            <div className="flex items-center gap-2">
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+              <div className="flex gap-1">
               {TIME_RANGES.map((range) => (
                 <Button
                   key={range}
                   variant={timeRange === range ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimeRange(range)}
+                  disabled={loading}
                   className="h-7 px-3 text-xs"
                 >
                   {range}
                 </Button>
               ))}
+              </div>
             </div>
           </div>
 
@@ -321,7 +325,7 @@ export default function Dashboard() {
               <p className="text-xs text-gray-400">Rækker fra Supabase: {rawRowCount}</p>
             </div>
           ) : (
-            <div className="h-96 w-full sm:h-[480px]">
+            <div className="h-96 w-full sm:h-120">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <defs>

@@ -22,7 +22,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { Plus } from "lucide-react"
+import { Plus, Loader2 } from "lucide-react"
 
 type Sensor = Tables<"sensor">
 
@@ -190,6 +190,7 @@ export default function DevicesPage() {
                   )}
 
                   <Button type="submit" className="w-full" disabled={adding}>
+                    {adding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {adding ? "Tilføjer..." : "Tilføj"}
                   </Button>
                 </form>

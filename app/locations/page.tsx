@@ -15,7 +15,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { MapPin, Plus, LogIn } from "lucide-react"
+import { MapPin, Plus, LogIn, Loader2 } from "lucide-react"
 
 type Location = Tables<"location">
 
@@ -209,6 +209,7 @@ export default function LocationsPage() {
                 <p className="text-sm text-destructive">{joinError}</p>
               )}
               <Button type="submit" className="w-full" disabled={joining}>
+                {joining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {joining ? "Tilslutter..." : "Tilslut"}
               </Button>
             </form>
@@ -258,6 +259,7 @@ export default function LocationsPage() {
               )}
 
               <Button type="submit" className="w-full" disabled={creating}>
+                {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {creating ? "Opretter..." : "Opret"}
               </Button>
             </form>

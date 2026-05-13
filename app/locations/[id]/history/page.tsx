@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Loader2, Download } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -86,7 +87,8 @@ export default function HistoryPage() {
           disabled={rows.length === 0}
           className="gap-2"
         >
-          ↓ Eksporter som CSV
+          <Download className="h-4 w-4" />
+          Eksporter som CSV
         </Button>
       </div>
 
@@ -106,7 +108,8 @@ export default function HistoryPage() {
           onChange={(e) => setTo(e.target.value)}
           className="w-40"
         />
-        <Button onClick={handleFilter} disabled={loading}>
+        <Button onClick={handleFilter} disabled={loading} className="gap-2">
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Henter..." : "Filtrer"}
         </Button>
       </div>
