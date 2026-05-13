@@ -10,6 +10,7 @@ import {
   Settings,
   CircleHelp,
   Home,
+  Zap,
 } from "lucide-react"
 
 import {
@@ -22,6 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   Tooltip,
@@ -41,6 +43,26 @@ const bottomSections = [
   { title: "Indstillinger", href: "/settings", icon: Settings },
 ]
 
+function SidebarLogo() {
+  const { state } = useSidebar()
+  const collapsed = state === "collapsed"
+
+  return (
+    <div className="flex h-10 items-center overflow-hidden">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+        <Zap className="h-4 w-4 text-primary-foreground" />
+      </div>
+      <span
+        className={`ml-2.5 whitespace-nowrap text-lg font-bold transition-[opacity,width] duration-300 ${
+          collapsed ? "w-0 opacity-0" : "opacity-100"
+        }`}
+      >
+        SmartHome
+      </span>
+    </div>
+  )
+}
+
 export function AppSidebar() {
   const pathname = usePathname()
 
@@ -54,17 +76,28 @@ export function AppSidebar() {
     !!locationId && pathname === `/locations/${locationId}/${slug}`
 
   return (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="text-2xl font-semibold">SmartHome</div>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="px-3 py-4">
+        <SidebarLogo />
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* Home */}
               <SidebarMenuItem>
-                <SidebarMenuButton asChild size="lg" className={onLocationsRoot ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"}>
+                <SidebarMenuButton
+                  asChild
+                  size="lg"
+                  isActive={onLocationsRoot}
+                  tooltip="Hjem"
+                  className={`rounded-lg transition-colors duration-150 ${
+                    onLocationsRoot
+                      ? "bg-primary/10 text-primary font-semibold hover:bg-primary/15"
+                      : "hover:bg-muted/80 hover:text-foreground"
+                  }`}
+                >
                   <Link href="/locations">
                     <Home className="h-5 w-5 shrink-0" />
                     <span className="text-base">Hjem</span>
@@ -72,41 +105,51 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
+              {/* Location-scoped items */}
               {mainSections.map((item) => {
                 const disabled = !locationId
+                const active = isActive(item.slug)
+
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="w-full">
-                          <SidebarMenuButton
-                            asChild={!disabled}
-                            size="lg"
-                            className={[
-                              isActive(item.slug) ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted",
-                              disabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "",
-                            ].join(" ")}
-                          >
-                            {disabled ? (
-                              <span className="flex items-center gap-2 px-2 py-1.5">
-                                <item.icon className="h-5 w-5 shrink-0" />
-                                <span className="text-base">{item.title}</span>
-                              </span>
-                            ) : (
-                              <Link href={makeUrl(item.slug)}>
-                                <item.icon className="h-5 w-5 shrink-0" />
-                                <span className="text-base">{item.title}</span>
-                              </Link>
-                            )}
-                          </SidebarMenuButton>
-                        </span>
-                      </TooltipTrigger>
-                      {disabled && (
-                        <TooltipContent side="right">
-                          Vælg en lokation først
+                    {disabled ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          {/* Outer span keeps pointer events so tooltip fires */}
+                          <span className="w-full">
+                            <SidebarMenuButton
+                              size="lg"
+                              className="pointer-events-none w-full cursor-not-allowed rounded-lg opacity-40"
+                              tabIndex={-1}
+                              aria-disabled="true"
+                            >
+                              <item.icon className="h-5 w-5 shrink-0" />
+                              <span className="text-base">{item.title}</span>
+                            </SidebarMenuButton>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs">
+                          Vælg en lokation for at åbne {item.title}
                         </TooltipContent>
-                      )}
-                    </Tooltip>
+                      </Tooltip>
+                    ) : (
+                      <SidebarMenuButton
+                        asChild
+                        size="lg"
+                        isActive={active}
+                        tooltip={item.title}
+                        className={`rounded-lg transition-colors duration-150 ${
+                          active
+                            ? "bg-primary/10 text-primary font-semibold hover:bg-primary/15"
+                            : "hover:bg-muted/80 hover:text-foreground"
+                        }`}
+                      >
+                        <Link href={makeUrl(item.slug)}>
+                          <item.icon className="h-5 w-5 shrink-0" />
+                          <span className="text-base">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
                   </SidebarMenuItem>
                 )
               })}
@@ -117,16 +160,29 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          {bottomSections.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild size="lg" className={pathname === item.href ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"}>
-                <Link href={item.href}>
-                  <item.icon className="h-5 w-5 shrink-0" />
-                  <span className="text-base">{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          {bottomSections.map((item) => {
+            const active = pathname === item.href
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  size="lg"
+                  isActive={active}
+                  tooltip={item.title}
+                  className={`rounded-lg transition-colors duration-150 ${
+                    active
+                      ? "bg-primary/10 text-primary font-semibold hover:bg-primary/15"
+                      : "hover:bg-muted/80 hover:text-foreground"
+                  }`}
+                >
+                  <Link href={item.href}>
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className="text-base">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

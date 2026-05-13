@@ -158,6 +158,12 @@ export default function DevicesPage() {
     setActivationCode("")
     setDeviceName("")
     setSheetOpen(false)
+    await fetchSensors()
+    setAdding(false)
+    toast.success(`Enhed "${deviceName.trim()}" tilføjet!`)
+  }
+
+  return (
     <div className="w-full">
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
 
