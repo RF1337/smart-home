@@ -83,7 +83,7 @@ function FAQRow({ item }: { item: FAQItem }) {
 
 export default function HelpPage() {
   return (
-    <div className="w-full max-w-3xl space-y-10">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hjælp</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -91,56 +91,106 @@ export default function HelpPage() {
         </p>
       </div>
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
-          <BookOpen className="h-4 w-4" />
-          Guides
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {GUIDES.map((g) => (
-            <Card key={g.title} className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-5 space-y-2">
-                <span className="text-2xl">{g.icon}</span>
-                <p className="font-semibold text-gray-900 text-sm">{g.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{g.description}</p>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Main column */}
+        <div className="lg:col-span-2 space-y-6">
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
+              <BookOpen className="h-4 w-4" />
+              Guides
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {GUIDES.map((g) => (
+                <Card key={g.title} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-5 space-y-2">
+                    <span className="text-2xl">{g.icon}</span>
+                    <p className="font-semibold text-gray-900 text-sm">{g.title}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{g.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
+              <MessageCircleQuestion className="h-4 w-4" />
+              Ofte stillede spørgsmål
+            </div>
+            <Card>
+              <CardContent className="p-0 divide-y divide-gray-100">
+                {FAQ_ITEMS.map((item) => (
+                  <FAQRow key={item.question} item={item} />
+                ))}
               </CardContent>
             </Card>
-          ))}
+          </section>
         </div>
-      </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
-          <MessageCircleQuestion className="h-4 w-4" />
-          Ofte stillede spørgsmål
-        </div>
-        <Card>
-          <CardContent className="p-0 divide-y divide-gray-100">
-            {FAQ_ITEMS.map((item) => (
-              <FAQRow key={item.question} item={item} />
-            ))}
-          </CardContent>
-        </Card>
-      </section>
+        {/* Sidebar column */}
+        <div className="space-y-4">
+          {/* Quick reference */}
+          <Card>
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
+                <BookOpen className="h-4 w-4" />
+                Hurtig reference
+              </div>
+              <ul className="space-y-3">
+                {[
+                  { page: "Dashboard", desc: "Live temperatur, trend og graf" },
+                  { page: "Enheder", desc: "Tilføj og administrer sensorer" },
+                  { page: "Alarmer", desc: "Sæt grænser og se hændelser" },
+                  { page: "Historik", desc: "Filtrer og eksportér data som CSV" },
+                ].map(({ page, desc }) => (
+                  <li key={page} className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium text-gray-800">{page}</span>
+                    <span className="text-xs text-gray-500">{desc}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-      <section className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
-          <LifeBuoy className="h-4 w-4" />
-          Support
+          {/* Status overview */}
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-gray-400">
+                <LifeBuoy className="h-4 w-4" />
+                Sensorstatus
+              </div>
+              <ul className="space-y-2">
+                {[
+                  { dot: "bg-green-500", label: "Online", desc: "Data modtaget inden for 2 min" },
+                  { dot: "bg-gray-300", label: "Offline", desc: "Ingen nylig kontakt" },
+                  { dot: "bg-orange-400", label: "Alarm aktiv", desc: "Grænse overskredet" },
+                ].map(({ dot, label, desc }) => (
+                  <li key={label} className="flex items-start gap-2.5">
+                    <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{label}</p>
+                      <p className="text-xs text-gray-500">{desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          {/* Support */}
+          <Card>
+            <CardContent className="p-5 space-y-1">
+              <p className="text-sm font-medium text-gray-800">Har du stadig brug for hjælp?</p>
+              <p className="text-sm text-gray-500">
+                Kontakt support på{" "}
+                <a href="mailto:support@smarthome.dk" className="text-blue-600 hover:underline">
+                  support@smarthome.dk
+                </a>
+              </p>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardContent className="p-5 flex flex-col gap-1">
-            <p className="text-sm font-medium text-gray-800">Har du stadig brug for hjælp?</p>
-            <p className="text-sm text-gray-500">
-              Kontakt support på{" "}
-              <a href="mailto:support@smartroom.dk" className="text-blue-600 hover:underline">
-                support@smartroom.dk
-              </a>
-              , eller tjek dokumentationen på GitHub.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      </div>
     </div>
   );
 }
